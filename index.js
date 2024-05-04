@@ -1,18 +1,10 @@
-const tiles = Array.from(document.querySelectorAll('.tile'));
-const playerDisplay = document.querySelector('.display-player');
-const restartButton = document.querySelector('#restart');
-const result = document.querySelector('.result');
+const cells = document.querySelectorAll('.cell');
+const display = document.getElementById('display');
+const restartBtn = document.getElementById('restart');
 
-let board = ['','','','','','','','',''];
-let currentPlayer = 'X';
-let isGameActive = true;
-
-const playerXwon = 'Player X won!';
-const playerOwon = 'Player O won!';
-
-const winning = [
+const winConditions = [
     [0,1,2],
-    [2,4,5],
+    [3,4,5],
     [6,7,8],
     [0,3,6],
     [1,4,7],
@@ -21,37 +13,69 @@ const winning = [
     [2,4,6]
 ];
 
-const Result = (type)=>{
-    switch(type){
-        case playerOwon:
-            result.innerHTML = 'Player <span class="player0">O</span> Won';
-            break;
-        case playerXwon:
-            result.innerHTML = 'Player <span class="playerX">X</span> Won';
-            break;
-        case TIE:
-            result.innerText = 'Tie';
+let options = ["","","","","","","","",""];
+let currentPlayer = "X";
+let running = false;
 
+initializeGame();
+
+function initializeGame(){
+    cells.forEach(cell=>cell.addEventListener("click",cellClicked));
+    restartBtn.addEventListener("click",restartGame);
+    display.textContent = `Player ${currentPlayer}'s turn`; 
+    running = true;
+}
+function cellClicked(){
+    const cellIndex = this.getAttribute("cellIndex");
+
+    if(options[cellIndex] != "" || !running){
+        return;
     }
+    updateCell(this,cellIndex);
+    checkWinner();
 }
-
-const changePlayer = () => {
-    playerDisplay.classList.remove(`player${currentPlayer}`);
-    currentPlayer = currentPlayer === 'X'?'O':'X';
-    playerDisplay.innerText = currentPlayer;
-    playerDisplay.classList.add(`player${currentPlayer}`);
+function updateCell(tile,index){
+    options[index] = currentPlayer;
+    tile.textContent = currentPlayer;
+    //changePlayer();
 }
+function changePlayer(){
+    currentPlayer = (currentPlayer == "X") ? "O" : "X";
+    display.textContent = `Player ${currentPlayer}'s turn`;
+}
+function checkWinner(){
+    let won = false;
 
-const userAction = (tile,index)=>{
-    if(isValidAction(tile) && isGameActive){
-        tile.innerText = currentPlayer;
-        tile.classList.add(`player${currentPlayer}`);
-        updateBoard(index);
-        handleResult();
+    for(let i = 0; i<winConditions.length;i++){
+        const condition = winConditions[i];
+        const cellA = options[condition[0]];
+        const cellB = options[condition[1]];
+        const cellC = options[condition[2]]; 
+
+        if(cellA == "" || cellB == "" || cellC == ""){
+            continue;
+        }
+        if(cellA == cellB && cellB == cellC){
+            won = true;
+            break;
+        }
+    }
+
+    if(won){
+        display.textContent = `${currentPlayer} wins!`;
+        running = false;
+    }else if(!options.includes("")){
+        display.textContent = 'Draw!';
+        running = false;
+    }
+    else{
         changePlayer();
     }
 }
-
-tiles.forEach((tile,index)=>{
-    tile.addEventListener('click',()=>userAction(tile,index));
-});
+function restartGame(){
+    currentPlayer = "X";
+    options = ["","","","","","","","",""];
+    display.textContent = `Player ${currentPlayer}'s turn`;
+    cells.forEach(cell=>cell.textContent = "");
+    running = true;
+}
